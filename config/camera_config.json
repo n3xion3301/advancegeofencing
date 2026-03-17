@@ -1,0 +1,8 @@
+{
+  "camera_index": 0,
+  "recording_duration_seconds": 60,
+  "output_directory": "recordings",
+  "video_format": "mp4",
+  "fps": 20,
+  "add_timestamp_overlay": true
+}

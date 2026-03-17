@@ -1,0 +1,14 @@
+{
+  "residence": {
+    "center": {
+      "latitude": 40.7128,
+      "longitude": -74.0060
+    },
+    "radius_meters": 50,
+    "polygon_coordinates": []
+  },
+  "monitoring": {
+    "check_interval_seconds": 5,
+    "breach_cooldown_seconds": 300
+  }
+}
