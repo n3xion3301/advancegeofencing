@@ -69,13 +69,15 @@ class DualModeGeofencingSystem:
             if self.telegram.enabled:
                 self.telegram.send_message("🏠 *Welcome Home!*\n\nAway mode deactivated.")
         
-        if self.previous_location:
+        # ONLY check for breaches when AWAY MODE is active
+        if self.previous_location and self.away_mode:
             if self.geofence.check_breach(current_location, self.previous_location):
                 self.handle_breach(current_location, location_data)
         
         self.previous_location = current_location
     
     def handle_breach(self, location, location_data):
+        # This only runs when AWAY MODE is active (intruder detection)
         self.breach_count += 1
         accuracy = location_data.get('accuracy', 0)
         speed = location_data.get('speed', 0)
@@ -83,52 +85,40 @@ class DualModeGeofencingSystem:
         # Get network info during breach
         network_info = self.network.get_network_summary() if self.network.available else None
         
-        if self.away_mode:
-            # INTRUDER ALERT with network info
-            breach_type = "🚨 INTRUDER ALERT"
+        breach_type = "🚨 INTRUDER ALERT"
+        
+        # Build network details
+        network_text = ""
+        if network_info:
+            wifi = network_info.get('wifi')
+            cellular = network_info.get('cellular')
             
-            # Build network details
-            network_text = ""
-            if network_info:
-                wifi = network_info.get('wifi')
-                cellular = network_info.get('cellular')
-                
-                if wifi and wifi.get('ssid') != '<unknown ssid>':
-                    network_text += f"\n📶 WiFi: `{wifi['ssid']}`"
-                    network_text += f"\n   Signal: {wifi['rssi']} dBm"
-                    network_text += f"\n   IP: `{wifi['ip']}`"
-                
-                if cellular:
-                    network_text += f"\n📱 Cellular: {cellular['type']}"
-                    network_text += f"\n   Signal: {cellular['strength']}%"
-                
-                nearby = network_info.get('nearby_networks', [])
-                if nearby:
-                    network_text += f"\n\n📡 Nearby Networks:"
-                    for net in nearby[:3]:
-                        network_text += f"\n   • {net.get('ssid', 'Hidden')} ({net.get('level', 0)} dBm)"
+            if wifi and wifi.get('ssid') != '<unknown ssid>':
+                network_text += f"\n📶 WiFi: `{wifi['ssid']}`"
+                network_text += f"\n   Signal: {wifi['rssi']} dBm"
+                network_text += f"\n   IP: `{wifi['ip']}`"
             
-            message = (
-                f"🚨 *CRITICAL: INTRUDER DETECTED!*\n\n"
-                f"Someone entered your property while you're away!\n\n"
-                f"*Breach #{self.breach_count}*\n"
-                f"📅 Time: `{time.strftime('%Y-%m-%d %H:%M:%S')}`\n"
-                f"📍 Location: `{location[0]:.6f}, {location[1]:.6f}`\n"
-                f"🎯 Accuracy: ±{accuracy:.1f}m\n"
-                f"🏃 Speed: {speed:.1f}m/s"
-                f"{network_text}\n\n"
-                f"📸 Capturing photos..."
-            )
-        else:
-            # Normal arrival
-            breach_type = "🏠 ARRIVAL DETECTED"
-            message = (
-                f"🏠 *Welcome Home!*\n\n"
-                f"*Arrival #{self.breach_count}*\n"
-                f"📅 Time: `{time.strftime('%Y-%m-%d %H:%M:%S')}`\n"
-                f"📍 Location: `{location[0]:.6f}, {location[1]:.6f}`\n"
-                f"🎯 Accuracy: ±{accuracy:.1f}m"
-            )
+            if cellular:
+                network_text += f"\n📱 Cellular: {cellular['type']}"
+                network_text += f"\n   Signal: {cellular['strength']}%"
+            
+            nearby = network_info.get('nearby_networks', [])
+            if nearby:
+                network_text += f"\n\n📡 Nearby Networks:"
+                for net in nearby[:3]:
+                    network_text += f"\n   • {net.get('ssid', 'Hidden')} ({net.get('level', 0)} dBm)"
+        
+        message = (
+            f"🚨 *CRITICAL: INTRUDER DETECTED!*\n\n"
+            f"Someone entered your property while you're away!\n\n"
+            f"*Breach #{self.breach_count}*\n"
+            f"📅 Time: `{time.strftime('%Y-%m-%d %H:%M:%S')}`\n"
+            f"📍 Location: `{location[0]:.6f}, {location[1]:.6f}`\n"
+            f"🎯 Accuracy: ±{accuracy:.1f}m\n"
+            f"🏃 Speed: {speed:.1f}m/s"
+            f"{network_text}\n\n"
+            f"📸 Capturing photos..."
+        )
         
         self.log_event(f"{breach_type} - Breach #{self.breach_count}")
         
@@ -136,10 +126,11 @@ class DualModeGeofencingSystem:
             self.telegram.send_message(message)
             self.telegram.send_location(location[0], location[1], breach_type)
         
+        # Capture photos for intruders only
         self.log_event("📸 Starting camera capture...")
         recording_thread = threading.Thread(
             target=self._record_breach, 
-            args=(location, self.away_mode, network_info)
+            args=(location, True, network_info)
         )
         recording_thread.daemon = True
         recording_thread.start()
@@ -152,7 +143,7 @@ class DualModeGeofencingSystem:
                 self.log_event(f"✅ Captured {len(results['photos'])} photos")
                 
                 if self.telegram.enabled:
-                    caption_prefix = "🚨 INTRUDER" if is_intruder else "🏠 Arrival"
+                    caption_prefix = "🚨 INTRUDER"
                     
                     for i, photo in enumerate(results['photos'], 1):
                         self.log_event(f"📤 Sending photo {i}/{len(results['photos'])}")
@@ -169,7 +160,7 @@ class DualModeGeofencingSystem:
     
     def run(self):
         print("=" * 60)
-        print("🛡️  Dual-Mode Geofencing Security System")
+        print("🛡️  Quantum World Geofence Recording System")
         print("=" * 60)
         
         self.log_event("System starting...")
@@ -192,7 +183,7 @@ class DualModeGeofencingSystem:
             if self.telegram.enabled:
                 mode_status = "✈️ Away Mode" if self.away_mode else "🏠 Home Mode"
                 startup_msg = f"""
-🟢 *Dual-Mode Security System Started*
+🟢 *Quantum World Geofence System Started*
 
 📍 Current: `{test_location['latitude']:.6f}, {test_location['longitude']:.6f}`
 🎯 Home: `{self.geofence.center[0]:.6f}, {self.geofence.center[1]:.6f}`
@@ -201,7 +192,7 @@ class DualModeGeofencingSystem:
 📸 Camera: {'✅ Enabled' if self.camera.camera_available else '❌ Disabled'}
 📶 Network Detection: {'✅ Enabled' if self.network.available else '❌ Disabled'}
 
-{'🚨 *INTRUDER ALERTS ACTIVE*' if self.away_mode else '🏠 Home monitoring active'}
+{'🚨 *INTRUDER ALERTS ACTIVE*' if self.away_mode else '🏠 Home mode - silent tracking'}
 """
                 self.telegram.send_message(startup_msg)
                 self.telegram.send_location(
@@ -223,7 +214,7 @@ class DualModeGeofencingSystem:
         except KeyboardInterrupt:
             self.log_event("System shutdown requested")
             if self.telegram.enabled:
-                self.telegram.send_message("🔴 *Security System Stopped*")
+                self.telegram.send_message("🔴 *Quantum World System Stopped*")
             print("\n👋 Shutting down...")
 
 if __name__ == "__main__":
