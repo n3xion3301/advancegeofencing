@@ -1,42 +1,41 @@
-import json
-import time
 from geopy.distance import geodesic
+import time
 
 class GeofenceMonitor:
-    def __init__(self, config_path='config/geofence_config.json'):
-        with open(config_path, 'r') as f:
-            self.config = json.load(f)
-        
-        self.center = (
-            self.config['residence']['center']['latitude'],
-            self.config['residence']['center']['longitude']
-        )
-        self.radius = self.config['residence']['radius_meters']
+    def __init__(self, center=(36.007085, -88.417576), radius_meters=50):
+        self.center = center
+        self.radius = radius_meters
         self.last_breach_time = 0
-        self.cooldown = self.config['monitoring']['breach_cooldown_seconds']
-        
-    def is_inside_geofence(self, current_location):
-        """Check if location is within circular geofence"""
-        distance = geodesic(self.center, current_location).meters
-        return distance <= self.radius
+        self.cooldown = 10  # 10 seconds between breach alerts
+        self.min_movement_meters = 15  # Must move at least 15m to trigger
     
     def get_distance_from_center(self, location):
-        """Get distance in meters from geofence center"""
+        """Calculate distance from center point"""
         return geodesic(self.center, location).meters
     
+    def is_inside_geofence(self, location):
+        """Check if location is inside geofence"""
+        distance = self.get_distance_from_center(location)
+        return distance <= self.radius
+    
     def check_breach(self, current_location, previous_location):
-        """Detect if boundary has been crossed"""
+        """Detect if boundary has been crossed in EITHER direction"""
         current_time = time.time()
         
         # Cooldown check
         if current_time - self.last_breach_time < self.cooldown:
             return False
         
+        # Check how far you actually moved
+        movement = geodesic(previous_location, current_location).meters
+        if movement < self.min_movement_meters:
+            return False  # Ignore small GPS drift
+        
         was_inside = self.is_inside_geofence(previous_location)
         is_inside = self.is_inside_geofence(current_location)
         
-        # Breach detected: transition from outside to inside
-        if not was_inside and is_inside:
+        # Breach detected: ANY transition across boundary
+        if was_inside != is_inside:
             self.last_breach_time = current_time
             return True
         
