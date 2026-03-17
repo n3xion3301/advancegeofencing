@@ -1,12 +1,10 @@
-# Change "radius_meters" to 700
-# This will put you INSIDE, then walk away to test
 {
   "residence": {
     "center": {
       "latitude": 36.007085,
       "longitude": -88.417576
     },
-    "radius_meters": 700,
+    "radius_meters": 50,
     "polygon_coordinates": []
   },
   "monitoring": {
