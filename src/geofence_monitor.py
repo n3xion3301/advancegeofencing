@@ -1,7 +1,6 @@
 import json
 import time
 from geopy.distance import geodesic
-from shapely.geometry import Point, Polygon
 
 class GeofenceMonitor:
     def __init__(self, config_path='config/geofence_config.json'):
@@ -21,15 +20,9 @@ class GeofenceMonitor:
         distance = geodesic(self.center, current_location).meters
         return distance <= self.radius
     
-    def is_inside_polygon(self, current_location):
-        """Check if location is within polygon geofence"""
-        coords = self.config['residence'].get('polygon_coordinates', [])
-        if not coords:
-            return None
-        
-        polygon = Polygon(coords)
-        point = Point(current_location[1], current_location[0])
-        return polygon.contains(point)
+    def get_distance_from_center(self, location):
+        """Get distance in meters from geofence center"""
+        return geodesic(self.center, location).meters
     
     def check_breach(self, current_location, previous_location):
         """Detect if boundary has been crossed"""
@@ -48,4 +41,3 @@ class GeofenceMonitor:
             return True
         
         return False
-

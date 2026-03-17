@@ -1,6 +1,7 @@
 import subprocess
 import json
 import time
+import shutil
 
 class AndroidLocationProvider:
     def __init__(self):
@@ -10,13 +11,21 @@ class AndroidLocationProvider:
     def _check_location_available(self):
         """Check if Termux API is available"""
         try:
+            # Use shutil.which which is more reliable
+            termux_location_path = shutil.which('termux-location')
+            if termux_location_path:
+                print(f"✅ Found termux-location at: {termux_location_path}")
+                return True
+            
+            # Fallback: try to run it directly
             result = subprocess.run(
-                ['which', 'termux-location'],
+                ['termux-location', '-h'],
                 capture_output=True,
-                timeout=5
+                timeout=2
             )
-            return result.returncode == 0
-        except:
+            return True
+        except Exception as e:
+            print(f"⚠️  Termux API check failed: {e}")
             return False
     
     def get_current_location(self):

@@ -2,16 +2,20 @@ import time
 import threading
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 from geofence_monitor import GeofenceMonitor
 from camera_controller import CameraController
-from notification_service import NotificationService
+from telegram_notifier import TelegramNotifier
 from android_location import AndroidLocationProvider
+
+# Load environment variables
+load_dotenv()
 
 class AndroidGeofencingSystem:
     def __init__(self):
         self.geofence = GeofenceMonitor()
         self.camera = CameraController()
-        self.notifier = NotificationService()
+        self.telegram = TelegramNotifier()
         self.location_provider = AndroidLocationProvider()
         self.previous_location = None
         self.breach_count = 0
@@ -39,17 +43,21 @@ class AndroidGeofencingSystem:
         accuracy = location_data.get('accuracy', 0)
         speed = location_data.get('speed', 0)
         
+        # Get distance from geofence center
+        distance = self.geofence.get_distance_from_center(current_location)
+        is_inside = self.geofence.is_inside_geofence(current_location)
+        
         # Only process if accuracy is reasonable (< 100 meters)
         if accuracy and accuracy > 100:
             self.log_event(f"⚠️  Low accuracy: {accuracy:.1f}m - skipping")
             return
         
-        # Log location update
+        # Log location update with status
+        status = "🟢 INSIDE" if is_inside else "🔴 OUTSIDE"
         self.log_event(
-            f"📍 Lat: {current_location[0]:.6f}, "
-            f"Lon: {current_location[1]:.6f}, "
-            f"Accuracy: ±{accuracy:.1f}m, "
-            f"Speed: {speed:.1f}m/s"
+            f"📍 {status} | Distance: {distance:.1f}m | "
+            f"Lat: {current_location[0]:.6f}, Lon: {current_location[1]:.6f} | "
+            f"Accuracy: ±{accuracy:.1f}m | Speed: {speed:.1f}m/s"
         )
         
         # Check for breach
@@ -63,20 +71,23 @@ class AndroidGeofencingSystem:
         """Handle geofence breach event"""
         self.breach_count += 1
         
+        accuracy = location_data.get('accuracy', 0)
+        speed = location_data.get('speed', 0)
+        
         breach_msg = (
             f"🚨 BREACH #{self.breach_count} DETECTED\n"
             f"Location: {location[0]:.6f}, {location[1]:.6f}\n"
-            f"Accuracy: ±{location_data.get('accuracy', 0):.1f}m\n"
-            f"Speed: {location_data.get('speed', 0):.1f}m/s"
+            f"Accuracy: ±{accuracy:.1f}m\n"
+            f"Speed: {speed:.1f}m/s"
         )
         
         self.log_event(breach_msg)
         
-        # Send notification
-        self.notifier.send_alert(
-            "🚨 Geofence Breach Detected",
-            breach_msg
-        )
+        # Send Telegram notification
+        if self.telegram.enabled:
+            self.telegram.send_breach_alert(
+                location, accuracy, speed, self.breach_count
+            )
         
         # Start recording in separate thread
         self.log_event("🎥 Starting camera recording...")
@@ -93,19 +104,22 @@ class AndroidGeofencingSystem:
             video_file = self.camera.start_recording(duration_seconds=60)
             self.log_event(f"✅ Recording saved: {video_file}")
             
-            # Optionally send notification with video path
-            self.notifier.send_alert(
-                "Recording Complete",
-                f"Video saved: {video_file}"
-            )
+            # Send file via Telegram if available
+            if self.telegram.enabled and video_file:
+                self.log_event("📤 Sending file to Telegram...")
+                if self.telegram.send_file(video_file, f"Breach recording at {location}"):
+                    self.log_event("✅ File sent to Telegram")
+                else:
+                    self.log_event("❌ Failed to send file to Telegram")
+                    
         except Exception as e:
             self.log_event(f"❌ Recording failed: {e}")
     
     def run(self):
         """Main monitoring loop"""
-        print("=" * 50)
-        print("🛡️  Android Geofencing Camera System")
-        print("=" * 50)
+        print("=" * 60)
+        print("🛡️  Android Geofencing Camera System with Telegram")
+        print("=" * 60)
         
         self.log_event("System starting...")
         
@@ -122,6 +136,27 @@ class AndroidGeofencingSystem:
             print(f"   Latitude: {test_location['latitude']:.6f}")
             print(f"   Longitude: {test_location['longitude']:.6f}")
             print(f"   Accuracy: ±{test_location.get('accuracy', 0):.1f}m")
+            
+            # Send startup notification
+            if self.telegram.enabled:
+                startup_msg = f"""
+🟢 *Geofencing System Started*
+
+📍 Current Location:
+`{test_location['latitude']:.6f}, {test_location['longitude']:.6f}`
+
+🎯 Geofence Center:
+`{self.geofence.center[0]:.6f}, {self.geofence.center[1]:.6f}`
+
+📏 Radius: {self.geofence.radius}m
+⏱️ Monitoring every 5 seconds
+"""
+                self.telegram.send_message(startup_msg)
+                self.telegram.send_location(
+                    test_location['latitude'],
+                    test_location['longitude'],
+                    "Current Position"
+                )
         else:
             print("❌ GPS not available!")
             print("\nTroubleshooting:")
@@ -142,6 +177,11 @@ class AndroidGeofencingSystem:
             )
         except KeyboardInterrupt:
             self.log_event("System shutdown requested")
+            
+            # Send shutdown notification
+            if self.telegram.enabled:
+                self.telegram.send_message("🔴 *Geofencing System Stopped*")
+            
             print("\n👋 Shutting down...")
         except Exception as e:
             self.log_event(f"Fatal error: {e}")
