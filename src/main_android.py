@@ -7,6 +7,7 @@ from geofence_monitor import GeofenceMonitor
 from termux_camera_controller import TermuxCameraController
 from telegram_notifier import TelegramNotifier
 from android_location import AndroidLocationProvider
+from network_detector import NetworkDetector
 
 load_dotenv()
 
@@ -16,10 +17,11 @@ class DualModeGeofencingSystem:
         self.camera = TermuxCameraController()
         self.telegram = TelegramNotifier()
         self.location_provider = AndroidLocationProvider()
+        self.network = NetworkDetector()
         self.previous_location = None
         self.breach_count = 0
-        self.away_mode = False  # Track if user is away
-        self.away_threshold_meters = 50  # Consider "away" if >200m from home
+        self.away_mode = False
+        self.away_threshold_meters = 200
         Path('logs').mkdir(exist_ok=True)
         
     def log_event(self, message):
@@ -41,11 +43,9 @@ class DualModeGeofencingSystem:
             self.log_event(f"⚠️  Low accuracy: {accuracy:.1f}m - skipping")
             return
         
-        # Determine if user is away from home
         was_away = self.away_mode
         self.away_mode = distance > self.away_threshold_meters
         
-        # Status indicators
         status = "🟢 HOME" if is_inside else "🔴 AWAY"
         mode_indicator = "🏠 AT HOME" if not self.away_mode else "✈️ AWAY MODE"
         
@@ -55,7 +55,6 @@ class DualModeGeofencingSystem:
             f"Accuracy: ±{accuracy:.1f}m | Speed: {speed:.1f}m/s"
         )
         
-        # Alert when transitioning to away mode
         if not was_away and self.away_mode:
             self.log_event("✈️ AWAY MODE ACTIVATED - Home monitoring enabled")
             if self.telegram.enabled:
@@ -65,13 +64,11 @@ class DualModeGeofencingSystem:
                     f"🔔 You'll be alerted if anyone enters your property."
                 )
         
-        # Alert when returning home
         if was_away and not self.away_mode:
             self.log_event("🏠 WELCOME HOME - Away mode deactivated")
             if self.telegram.enabled:
                 self.telegram.send_message("🏠 *Welcome Home!*\n\nAway mode deactivated.")
         
-        # Check for breach
         if self.previous_location:
             if self.geofence.check_breach(current_location, self.previous_location):
                 self.handle_breach(current_location, location_data)
@@ -83,10 +80,34 @@ class DualModeGeofencingSystem:
         accuracy = location_data.get('accuracy', 0)
         speed = location_data.get('speed', 0)
         
-        # Different alerts based on mode
+        # Get network info during breach
+        network_info = self.network.get_network_summary() if self.network.available else None
+        
         if self.away_mode:
-            # CRITICAL: Someone entering while you're away!
+            # INTRUDER ALERT with network info
             breach_type = "🚨 INTRUDER ALERT"
+            
+            # Build network details
+            network_text = ""
+            if network_info:
+                wifi = network_info.get('wifi')
+                cellular = network_info.get('cellular')
+                
+                if wifi and wifi.get('ssid') != '<unknown ssid>':
+                    network_text += f"\n📶 WiFi: `{wifi['ssid']}`"
+                    network_text += f"\n   Signal: {wifi['rssi']} dBm"
+                    network_text += f"\n   IP: `{wifi['ip']}`"
+                
+                if cellular:
+                    network_text += f"\n📱 Cellular: {cellular['type']}"
+                    network_text += f"\n   Signal: {cellular['strength']}%"
+                
+                nearby = network_info.get('nearby_networks', [])
+                if nearby:
+                    network_text += f"\n\n📡 Nearby Networks:"
+                    for net in nearby[:3]:
+                        network_text += f"\n   • {net.get('ssid', 'Hidden')} ({net.get('level', 0)} dBm)"
+            
             message = (
                 f"🚨 *CRITICAL: INTRUDER DETECTED!*\n\n"
                 f"Someone entered your property while you're away!\n\n"
@@ -94,11 +115,12 @@ class DualModeGeofencingSystem:
                 f"📅 Time: `{time.strftime('%Y-%m-%d %H:%M:%S')}`\n"
                 f"📍 Location: `{location[0]:.6f}, {location[1]:.6f}`\n"
                 f"🎯 Accuracy: ±{accuracy:.1f}m\n"
-                f"🏃 Speed: {speed:.1f}m/s\n\n"
+                f"🏃 Speed: {speed:.1f}m/s"
+                f"{network_text}\n\n"
                 f"📸 Capturing photos..."
             )
         else:
-            # Normal: You're arriving home
+            # Normal arrival
             breach_type = "🏠 ARRIVAL DETECTED"
             message = (
                 f"🏠 *Welcome Home!*\n\n"
@@ -114,16 +136,15 @@ class DualModeGeofencingSystem:
             self.telegram.send_message(message)
             self.telegram.send_location(location[0], location[1], breach_type)
         
-        # Always capture photos for security
         self.log_event("📸 Starting camera capture...")
         recording_thread = threading.Thread(
             target=self._record_breach, 
-            args=(location, self.away_mode)
+            args=(location, self.away_mode, network_info)
         )
         recording_thread.daemon = True
         recording_thread.start()
     
-    def _record_breach(self, location, is_intruder):
+    def _record_breach(self, location, is_intruder, network_info):
         try:
             results = self.camera.start_recording(duration_seconds=30)
             
@@ -178,6 +199,7 @@ class DualModeGeofencingSystem:
 📏 Distance: {distance:.0f}m
 🔔 Mode: {mode_status}
 📸 Camera: {'✅ Enabled' if self.camera.camera_available else '❌ Disabled'}
+📶 Network Detection: {'✅ Enabled' if self.network.available else '❌ Disabled'}
 
 {'🚨 *INTRUDER ALERTS ACTIVE*' if self.away_mode else '🏠 Home monitoring active'}
 """
