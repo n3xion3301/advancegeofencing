@@ -1,0 +1,16 @@
+{
+  "quantum_on_zone_entry": true,
+  "quantum_on_entity_detected": true,
+  "auto_visualize_threshold": 0.7,
+  "telegram_notifications": true,
+  "zones": {
+    "home": {
+      "quantum_mode": "auto",
+      "entity_tracking": true
+    },
+    "outside": {
+      "quantum_mode": "manual",
+      "entity_tracking": false
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "start_time": "2026-03-17T02:16:58.759631",
+  "points": [
+    {
+      "timestamp": "2026-03-17T02:16:58.759666",
+      "lat": 36.00676,
+      "lon": -88.418275,
+      "accuracy": 6.5,
+      "speed": 0.0,
+      "altitude": 78.8
+    },
+    {
+      "timestamp": "2026-03-17T02:17:09.759780",
+      "lat": 36.00696000000001,
+      "lon": -88.41802833333334,
+      "accuracy": 6.400000095367432,
+      "speed": 0.0,
+      "altitude": 78.8
+    }
+  ],
+  "stats": {
+    "points": 2,
+    "distance_meters": 31.4,
+    "duration_seconds": 11,
+    "avg_speed_mps": 2.85
+  }
+}

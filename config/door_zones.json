@@ -1,0 +1,12 @@
+{
+  "FRONT_DOOR": {
+    "name": "The Doorway Guardian",
+    "lat": 36.006798,
+    "lon": -88.418295
+  },
+  "BACK_DOOR": {
+    "name": "The Shadow Keeper",
+    "lat": 36.006820,
+    "lon": -88.418310
+  }
+}

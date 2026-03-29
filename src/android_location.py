@@ -7,17 +7,15 @@ class AndroidLocationProvider:
     def __init__(self):
         self.last_location = None
         self.location_enabled = self._check_location_available()
-        
+
     def _check_location_available(self):
         """Check if Termux API is available"""
         try:
-            # Use shutil.which which is more reliable
             termux_location_path = shutil.which('termux-location')
             if termux_location_path:
                 print(f"✅ Found termux-location at: {termux_location_path}")
                 return True
-            
-            # Fallback: try to run it directly
+
             result = subprocess.run(
                 ['termux-location', '-h'],
                 capture_output=True,
@@ -27,82 +25,44 @@ class AndroidLocationProvider:
         except Exception as e:
             print(f"⚠️  Termux API check failed: {e}")
             return False
-    
+
     def get_current_location(self):
-        """Get GPS location using Termux API"""
+        """Get location using Termux API"""
         if not self.location_enabled:
             print("❌ Termux API not available")
             return None
-            
+
         try:
-            # Request location from Termux API with GPS provider
+            # Simple termux-location call (no -r once flag)
             result = subprocess.run(
-                ['termux-location', '-p', 'gps', '-r', 'once'],
+                ['termux-location'],
                 capture_output=True,
                 text=True,
-                timeout=15
+                timeout=30  # Longer timeout
             )
-            
+
             if result.returncode == 0 and result.stdout.strip():
                 location_data = json.loads(result.stdout)
-                
+
                 latitude = location_data.get('latitude')
                 longitude = location_data.get('longitude')
-                accuracy = location_data.get('accuracy', 0)
-                altitude = location_data.get('altitude', 0)
-                bearing = location_data.get('bearing', 0)
-                speed = location_data.get('speed', 0)
-                
-                if latitude and longitude:
-                    self.last_location = (latitude, longitude)
-                    return {
+
+                if latitude is not None and longitude is not None:
+                    self.last_location = {
                         'latitude': latitude,
                         'longitude': longitude,
-                        'accuracy': accuracy,
-                        'altitude': altitude,
-                        'bearing': bearing,
-                        'speed': speed,
-                        'timestamp': time.time()
+                        'accuracy': location_data.get('accuracy', 0),
+                        'provider': location_data.get('provider', 'unknown')
                     }
-            else:
-                print(f"⚠️  Location request failed: {result.stderr}")
-            
-            # Return last known location if current fails
-            if self.last_location:
-                print("📍 Using last known location")
-                return {
-                    'latitude': self.last_location[0],
-                    'longitude': self.last_location[1],
-                    'accuracy': None,
-                    'timestamp': time.time()
-                }
-                
+                    print(f"📍 Location: ({latitude:.6f}, {longitude:.6f}) ±{location_data.get('accuracy', 0):.1f}m")
+                    return self.last_location
+
+            print(f"⚠️  Location failed: {result.stderr}")
+            return self.last_location
+
         except subprocess.TimeoutExpired:
-            print("⏱️  Location request timed out")
-        except json.JSONDecodeError as e:
-            print(f"❌ Failed to parse location data: {e}")
+            print("⏱️  Location timeout (30s) - retrying next cycle")
+            return self.last_location
         except Exception as e:
             print(f"❌ Location error: {e}")
-            
-        return None
-    
-    def start_continuous_tracking(self, callback, interval=5):
-        """Continuously track location and call callback on updates"""
-        print(f"🔄 Starting continuous tracking (interval: {interval}s)")
-        
-        while True:
-            try:
-                location = self.get_current_location()
-                if location:
-                    callback(location)
-                else:
-                    print("⚠️  No location data available")
-                    
-                time.sleep(interval)
-                
-            except KeyboardInterrupt:
-                print("\n⏹️  Stopping location tracking")
-                break
-            except Exception as e:
-                print(f"❌ Tracking error: {e}")
-                time.sleep(interval)
+            return self.last_location

@@ -1,0 +1,250 @@
+#!/usr/bin/env python3
+"""
+WiFi Entity Detector - Zone Aware with Filtering
+"""
+
+import json
+import time
+import subprocess
+from datetime import datetime
+from pathlib import Path
+from geofence_monitor import GeofenceMonitor
+from android_location import AndroidLocationProvider
+
+class WiFiEntityDetector:
+    def __init__(self):
+        self.known_networks = set()
+        self.my_networks = self._load_my_networks()
+        self.entity_zones = self._load_zones()
+        self.location_provider = AndroidLocationProvider()
+        self.scan_interval = 5
+        self.zone_radius_multiplier = 3.0
+        
+    def _load_my_networks(self):
+        """Load user's own networks to filter out"""
+        config_file = Path("config/my_networks.json")
+        if config_file.exists():
+            return json.loads(config_file.read_text())
+        return {"my_networks": {"ssids": [], "bssids": [], "keywords": []}}
+    
+    def _load_zones(self):
+        """Load entity zones"""
+        config_file = Path("config/entity_zones.json")
+        if config_file.exists():
+            config = json.loads(config_file.read_text())
+            return [z for z in config['entity_zones'] if 'DOOR' in z['name']]
+        return []
+    
+    def is_my_network(self, ssid, bssid):
+        """Check if network belongs to user"""
+        my_nets = self.my_networks.get('my_networks', {})
+        
+        # Check exact SSID match
+        if ssid in my_nets.get('ssids', []):
+            return True
+        
+        # Check exact BSSID match
+        if bssid in my_nets.get('bssids', []):
+            return True
+        
+        # Check keyword match (case insensitive)
+        for keyword in my_nets.get('keywords', []):
+            if keyword.lower() in ssid.lower():
+                return True
+        
+        return False
+    
+    def is_near_zone(self, zone):
+        """Check if current location is near a zone"""
+        location = self.location_provider.get_current_location()
+        
+        if not location:
+            return False, 999
+        
+        current_pos = (location['latitude'], location['longitude'])
+        
+        monitor = GeofenceMonitor(
+            center=(zone['lat'], zone['lon']),
+            radius_meters=zone['radius'] * self.zone_radius_multiplier
+        )
+        
+        distance = monitor.get_distance_from_center(current_pos)
+        is_near = distance <= (zone['radius'] * self.zone_radius_multiplier)
+        
+        return is_near, distance
+    
+    def scan_wifi(self):
+        """Scan for WiFi networks"""
+        try:
+            result = subprocess.run(
+                ['termux-wifi-scaninfo'],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode == 0:
+                networks = json.loads(result.stdout)
+                return networks
+            return []
+        except Exception as e:
+            print(f"WiFi scan error: {e}")
+            return []
+    
+    def detect_new_entities(self, networks):
+        """Detect new WiFi networks (entities) - excluding user's own"""
+        new_entities = []
+        current_networks = set()
+        
+        for network in networks:
+            bssid = network.get('bssid', '')
+            ssid = network.get('ssid', 'Hidden Network')
+            
+            if not bssid:
+                continue
+            
+            current_networks.add(bssid)
+            
+            # Skip if it's user's own network
+            if self.is_my_network(ssid, bssid):
+                continue
+            
+            # New entity detected!
+            if bssid not in self.known_networks:
+                new_entities.append({
+                    'bssid': bssid,
+                    'ssid': ssid,
+                    'signal': network.get('level', 0),
+                    'frequency': network.get('frequency', 0)
+                })
+        
+        # Update known networks
+        self.known_networks = current_networks
+        
+        return new_entities
+    
+    def send_entity_alert(self, entity, zone, distance):
+        """Alert when new entity detected at zone"""
+        title = f"🚨 {zone['emoji']} ENTITY AT {zone['name']}!"
+        content = (
+            f"👻 {zone['entity']} detected!\n"
+            f"📡 Network: {entity['ssid']}\n"
+            f"📏 {distance:.1f}m from door\n"
+            f"📶 Signal: {entity['signal']} dBm"
+        )
+        
+        try:
+            subprocess.run([
+                'termux-notification',
+                '--title', title,
+                '--content', content,
+                '--priority', 'max',
+                '--sound',
+                '--vibrate', '500,200,500,200,500',
+                '--button1', '📸 Record',
+                '--button1-action', 'termux-camera-photo -c 0'
+            ])
+            
+            try:
+                from telegram_notifier import TelegramNotifier
+                telegram = TelegramNotifier()
+                msg = (
+                    f"🚨 ENTITY AT {zone['name']}!\n\n"
+                    f"👻 {zone['entity']}\n"
+                    f"📡 WiFi: {entity['ssid']}\n"
+                    f"🔍 BSSID: {entity['bssid']}\n"
+                    f"📶 {entity['signal']} dBm\n"
+                    f"📏 {distance:.1f}m from door\n"
+                    f"⏰ {datetime.now().strftime('%H:%M:%S')}"
+                )
+                result = telegram.send_message(msg, parse_mode=None)
+                if result:
+                    print("                    ✅ Telegram sent!")
+                else:
+                    print("                    ⚠️  Telegram failed")
+            except Exception as e:
+                print(f"                    ❌ Telegram error: {e}")
+                
+        except Exception as e:
+            print(f"Alert error: {e}")
+    
+    def run(self):
+        """Main detection loop"""
+        print("👻 WiFi Entity Detector (Filtered)")
+        print(f"🚪 Monitoring {len(self.entity_zones)} zones")
+        print(f"📡 Scan: {self.scan_interval}s")
+        print(f"📏 Range: {int(20 * self.zone_radius_multiplier)}m")
+        
+        my_nets = self.my_networks.get('my_networks', {})
+        filtered_count = len(my_nets.get('ssids', [])) + len(my_nets.get('keywords', []))
+        print(f"🚫 Filtering {filtered_count} of your networks")
+        print(f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print()
+        
+        for zone in self.entity_zones:
+            print(f"   {zone['emoji']} {zone['name']}: {zone['entity']}")
+        print()
+        
+        print("🔍 Initial scan...")
+        initial_networks = self.scan_wifi()
+        
+        for network in initial_networks:
+            bssid = network.get('bssid', '')
+            ssid = network.get('ssid', 'Hidden')
+            if bssid:
+                self.known_networks.add(bssid)
+                if self.is_my_network(ssid, bssid):
+                    print(f"   🚫 Filtered: {ssid}")
+        
+        print(f"✅ Baseline: {len(self.known_networks)} networks")
+        print("👁️  Watching for UNKNOWN entities...\n")
+        
+        while True:
+            try:
+                timestamp = datetime.now().strftime('%H:%M:%S')
+                
+                near_zones = []
+                for zone in self.entity_zones:
+                    is_near, distance = self.is_near_zone(zone)
+                    if is_near:
+                        near_zones.append((zone, distance))
+                
+                if not near_zones:
+                    time.sleep(self.scan_interval)
+                    continue
+                
+                for zone, distance in near_zones:
+                    print(f"[{timestamp}] 🚪 {zone['name']} ({distance:.1f}m)")
+                
+                networks = self.scan_wifi()
+                new_entities = self.detect_new_entities(networks)
+                
+                if new_entities:
+                    for entity in new_entities:
+                        for zone, distance in near_zones:
+                            print(f"\n{'='*60}")
+                            print(f"🚨 UNKNOWN ENTITY AT {zone['name']}!")
+                            print(f"{'='*60}")
+                            print(f"👻 {zone['entity']}")
+                            print(f"📡 {entity['ssid']}")
+                            print(f"🔍 {entity['bssid']}")
+                            print(f"📶 {entity['signal']} dBm")
+                            print(f"📏 {distance:.1f}m")
+                            print(f"{'='*60}\n")
+                            
+                            self.send_entity_alert(entity, zone, distance)
+                else:
+                    print(f"[{timestamp}] 👁️  {len(networks)} networks (all known)")
+                
+                time.sleep(self.scan_interval)
+                
+            except KeyboardInterrupt:
+                print("\n👋 Stopped")
+                break
+            except Exception as e:
+                print(f"❌ {e}")
+                time.sleep(self.scan_interval)
+
+if __name__ == "__main__":
+    detector = WiFiEntityDetector()
+    detector.run()

@@ -1,0 +1,24 @@
+{
+  "entity_zones": [
+    {
+      "name": "FRONT_DOOR",
+      "emoji": "🚪",
+      "entity": "The Doorway Guardian",
+      "description": "Portal between normal and parallel worlds",
+      "lat": 36.006933333333336,
+      "lon": -88.41814000000001,
+      "radius": 20,
+      "active_hours": [6, 22]
+    },
+    {
+      "name": "BACK_DOOR",
+      "emoji": "🚪",
+      "entity": "The Shadow Keeper",
+      "description": "Where shadows cross dimensions",
+      "lat": 36.006798,
+      "lon": -88.418295,
+      "radius": 20,
+      "active_hours": [6, 22]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="GeofenceSystem">
+  <trk>
+    <name>Route 2026-03-17 02:33:46</name>
+    <trkseg>
+      <trkpt lat="36.00687166666667" lon="-88.41808999999999">
+        <ele>123.60000000000001</ele>
+        <time>2026-03-17T02:33:46.872181</time>
+      </trkpt>
+      <trkpt lat="36.006881666666665" lon="-88.41803333333334">
+        <ele>123.60000000000001</ele>
+        <time>2026-03-17T02:33:59.549149</time>
+      </trkpt>
+      <trkpt lat="36.006835" lon="-88.41824833333334">
+        <ele>123.50000000000001</ele>
+        <time>2026-03-17T02:34:11.493584</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

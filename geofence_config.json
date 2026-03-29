@@ -1,0 +1,30 @@
+{
+  "zones": [
+    {
+      "name": "HOME",
+      "lat": 36.006975,
+      "lon": -88.418078,
+      "radius": 50,
+      "telegram_chat_id": "YOUR_CHAT_ID_HERE",
+      "instagram_mode": true
+    },
+    {
+      "name": "PARK",
+      "lat": 36.008,
+      "lon": -88.418,
+      "radius": 100,
+      "telegram_chat_id": "YOUR_CHAT_ID_HERE",
+      "instagram_mode": false
+    },
+    {
+      "name": "PLAYGROUND",
+      "lat": 36.009,
+      "lon": -88.419,
+      "radius": 75,
+      "telegram_chat_id": "YOUR_CHAT_ID_HERE",
+      "instagram_mode": false
+    }
+  ],
+  "check_interval": 10,
+  "telegram_enabled": true
+}

@@ -1,0 +1,15 @@
+{
+  "my_networks": {
+    "ssids": [
+      "YOUR_WIFI_NAME_HERE",
+      "YOUR_PHONE_HOTSPOT_HERE"
+    ],
+    "bssids": [
+      "YOUR:MAC:ADDRESS:HERE"
+    ],
+    "keywords": [
+      "spectrum",
+      "netgear"
+    ]
+  }
+}

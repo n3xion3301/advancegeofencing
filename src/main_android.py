@@ -71,7 +71,7 @@ class DualModeGeofencingSystem:
         self.log_event(
             f"📍 {status} | {mode_indicator} | Distance: {distance:.1f}m | "
             f"Lat: {current_location[0]:.6f}, Lon: {current_location[1]:.6f} | "
-            f"Accuracy: ±{accuracy:.1f}m | Speed: {speed:.1f}m/s{route_info}"
+            f"Accuracy: ±{accuracy:.1f}m | Speed: {speed:.1f}m/s{route_info}")
 
         # Route Learning - Detect when stopped moving
         if speed < 0.5:  # Nearly stationary
@@ -83,7 +83,7 @@ class DualModeGeofencingSystem:
                     stats = self.route_tracker.get_stats()
                     if stats and stats["distance_meters"] > 50:  # Meaningful route
                         self.log_event("🧠 Route learning triggered - analyzing pattern...")
-                        route_data = self.route_tracker.get_current_route()
+                        route_data = self.route_tracker.get_route()
                         self.route_learner.learn_route(route_data)
                         self.last_learned_time = time.time()
                         self.log_event("✅ Route pattern learned and saved!")

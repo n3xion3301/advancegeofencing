@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="GeofenceSystem">
+  <trk>
+    <name>Route 2026-03-17 10:52:43</name>
+    <trkseg>
+      <trkpt lat="36.006949999999996" lon="-88.41807333333333">
+        <ele>81.8</ele>
+        <time>2026-03-17T10:52:43.966521</time>
+      </trkpt>
+      <trkpt lat="36.00683166666667" lon="-88.418085">
+        <ele>81.7</ele>
+        <time>2026-03-17T10:52:56.128111</time>
+      </trkpt>
+      <trkpt lat="36.007039999999996" lon="-88.41767833333333">
+        <ele>81.9</ele>
+        <time>2026-03-17T10:53:03.405187</time>
+      </trkpt>
+      <trkpt lat="36.007034999999995" lon="-88.41766666666666">
+        <ele>81.9</ele>
+        <time>2026-03-17T10:53:13.908363</time>
+      </trkpt>
+      <trkpt lat="36.007169999999995" lon="-88.41751000000001">
+        <ele>81.9</ele>
+        <time>2026-03-17T10:53:26.252126</time>
+      </trkpt>
+      <trkpt lat="36.006895" lon="-88.41805166666667">
+        <ele>81.9</ele>
+        <time>2026-03-17T10:53:37.558443</time>
+      </trkpt>
+      <trkpt lat="36.00687666666667" lon="-88.41808333333331">
+        <ele>81.9</ele>
+        <time>2026-03-17T10:53:44.465268</time>
+      </trkpt>
+      <trkpt lat="36.00711" lon="-88.41756500000001">
+        <ele>82.0</ele>
+        <time>2026-03-17T10:53:53.287843</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

@@ -1,0 +1,10 @@
+Requirement already satisfied: cffi in /data/data/com.termux/files/usr/lib/python3.13/site-packages (1.17.1)
+Collecting cffi
+  Using cached cffi-2.0.0-cp313-cp313-android_24_arm64_v8a.whl
+Requirement already satisfied: pycparser in /data/data/com.termux/files/usr/lib/python3.13/site-packages (from cffi) (3.0)
+Installing collected packages: cffi
+  Attempting uninstall: cffi
+    Found existing installation: cffi 1.17.1
+    Uninstalling cffi-1.17.1:
+      Successfully uninstalled cffi-1.17.1
+Successfully installed cffi-2.0.0

@@ -1,0 +1,37 @@
+{
+  "zones": [
+    {
+      "name": "HOME",
+      "emoji": "🏠",
+      "lat": 36.006975,
+      "lon": -88.418078,
+      "radius": 50,
+      "trigger_on_enter": true,
+      "trigger_on_exit": false,
+      "active_hours": [6, 22],
+      "cooldown_minutes": 30
+    },
+    {
+      "name": "PARK",
+      "emoji": "🌳",
+      "lat": 36.008,
+      "lon": -88.418,
+      "radius": 100,
+      "trigger_on_enter": true,
+      "trigger_on_exit": true,
+      "active_hours": [7, 18],
+      "cooldown_minutes": 60
+    },
+    {
+      "name": "PLAYGROUND",
+      "emoji": "🎮",
+      "lat": 36.009,
+      "lon": -88.419,
+      "radius": 75,
+      "trigger_on_enter": true,
+      "trigger_on_exit": false,
+      "active_hours": [7, 18],
+      "cooldown_minutes": 45
+    }
+  ]
+}

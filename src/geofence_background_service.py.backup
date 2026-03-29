@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+"""
+Background Geofence Monitor Service
+Runs silently and sends Android notifications when zones are breached
+"""
+
+import json
+import time
+import subprocess
+from datetime import datetime, timedelta
+from pathlib import Path
+from geofence_monitor import GeofenceMonitor
+from android_location import AndroidLocationProvider
+
+class BackgroundGeofenceService:
+    def __init__(self):
+        self.zones = self._load_zones()
+        self.location_provider = AndroidLocationProvider()
+        self.last_triggers = {}
+        
+    def _load_zones(self):
+        """Load geofence zones"""
+        config_file = Path("config/zones.json")
+        if not config_file.exists():
+            return []
+        config = json.loads(config_file.read_text())
+        return config['zones']
+    
+    def _is_in_quiet_hours(self):
+        """Check quiet hours"""
+        hour = datetime.now().hour
+        return hour >= 22 or hour < 6
+    
+    def _can_trigger(self, zone_name, cooldown_minutes):
+        """Check cooldown"""
+        if zone_name not in self.last_triggers:
+            return True
+        
+        last_trigger = self.last_triggers[zone_name]
+        elapsed = (datetime.now() - last_trigger).seconds / 60
+        return elapsed >= cooldown_minutes
+    
+    def _is_in_active_hours(self, active_hours):
+        """Check active hours"""
+        hour = datetime.now().hour
+        return active_hours[0] <= hour < active_hours[1]
+    
+    def send_android_notification(self, zone, trigger_type):
+        """Send Android notification with action to open camera"""
+        title = f"{zone['emoji']} GEOFENCE {trigger_type}!"
+        content = f"Zone: {zone['name']} - Open camera to record!"
+        
+        try:
+            # Send notification
+            subprocess.run([
+                'termux-notification',
+                '--title', title,
+                '--content', content,
+                '--priority', 'high',
+                '--sound',
+                '--vibrate', '200,100,200',
+                '--action', 'termux-open --camera',
+                '--button1', '📸 Open Camera',
+                '--button1-action', 'termux-camera-photo -c 0'
+            ])
+            
+            # Also send to Telegram if configured
+            try:
+                from telegram_notifier import TelegramNotifier
+                telegram = TelegramNotifier()
+                telegram.send_message(f"{title}\n\n{content}\n⏰ {datetime.now().strftime('%H:%M:%S')}")
+            except:
+                pass
+                
+        except Exception as e:
+            print(f"Notification error: {e}")
+    
+    def check_zones(self, lat, lon):
+        """Check all zones"""
+        current_pos = (lat, lon)
+        triggered_zones = []
+        
+        for zone in self.zones:
+            monitor = GeofenceMonitor(
+                center=(zone['lat'], zone['lon']),
+                radius_meters=zone['radius']
+            )
+            
+            distance = monitor.get_distance_from_center(current_pos)
+            inside = monitor.is_inside_geofence(current_pos)
+            
+            should_trigger = False
+            trigger_type = None
+            
+            if inside and zone['trigger_on_enter']:
+                should_trigger = True
+                trigger_type = "ENTER"
+            elif not inside and zone['trigger_on_exit']:
+                should_trigger = True
+                trigger_type = "EXIT"
+            
+            if should_trigger:
+                if self._is_in_quiet_hours():
+                    continue
+                
+                if not self._is_in_active_hours(zone['active_hours']):
+                    continue
+                
+                if not self._can_trigger(zone['name'], zone['cooldown_minutes']):
+                    continue
+                
+                triggered_zones.append({
+                    'name': zone['name'],
+                    'emoji': zone['emoji'],
+                    'type': trigger_type,
+                    'distance': distance,
+                    'zone': zone
+                })
+                
+                self.last_triggers[zone['name']] = datetime.now()
+        
+        return triggered_zones
+    
+    def run(self):
+        """Main service loop"""
+        print(f"🔒 Background Geofence Service Started")
+        print(f"📍 Monitoring {len(self.zones)} zones")
+        print(f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        while True:
+            try:
+                location = self.location_provider.get_current_location()
+                
+                if not location:
+                    time.sleep(30)
+                    continue
+                
+                lat = location['latitude']
+                lon = location['longitude']
+                
+                triggered = self.check_zones(lat, lon)
+                
+                for zone_data in triggered:
+                    print(f"🚨 BREACH: {zone_data['emoji']} {zone_data['name']} {zone_data['type']}")
+                    self.send_android_notification(zone_data['zone'], zone_data['type'])
+                
+                time.sleep(30)  # Check every 30 seconds
+                
+            except Exception as e:
+                print(f"Error: {e}")
+                time.sleep(30)
+
+if __name__ == "__main__":
+    service = BackgroundGeofenceService()
+    service.run()

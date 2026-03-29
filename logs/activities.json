@@ -1,0 +1,56 @@
+[
+  {
+    "timestamp": "2026-03-28T00:08:33.383901",
+    "activity": "WALKING_STEADY",
+    "speed": 1.4,
+    "variance": 0.02
+  },
+  {
+    "timestamp": "2026-03-28T00:17:33.865746",
+    "activity": "WALKING_STEADY",
+    "speed": 1.5,
+    "variance": 0.0
+  },
+  {
+    "timestamp": "2026-03-28T00:17:43.874773",
+    "activity": "WALKING_STEADY",
+    "speed": 1.5,
+    "variance": 0.0
+  },
+  {
+    "timestamp": "2026-03-28T00:17:53.881600",
+    "activity": "WALKING_STEADY",
+    "speed": 1.5,
+    "variance": 0.0
+  },
+  {
+    "timestamp": "2026-03-28T00:18:03.890447",
+    "activity": "WALKING_STEADY",
+    "speed": 1.5,
+    "variance": 0.0
+  },
+  {
+    "timestamp": "2026-03-28T00:18:13.896084",
+    "activity": "WALKING_STEADY",
+    "speed": 1.5,
+    "variance": 0.0
+  },
+  {
+    "timestamp": "2026-03-28T00:18:23.907825",
+    "activity": "WALKING_STEADY",
+    "speed": 1.5,
+    "variance": 0.0
+  },
+  {
+    "timestamp": "2026-03-28T00:18:33.919362",
+    "activity": "WALKING_STEADY",
+    "speed": 1.5,
+    "variance": 0.0
+  },
+  {
+    "timestamp": "2026-03-28T00:18:43.929282",
+    "activity": "WALKING_STEADY",
+    "speed": 1.5,
+    "variance": 0.0
+  }
+]
