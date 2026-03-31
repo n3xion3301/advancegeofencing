@@ -5,14 +5,51 @@ data/personal_*.json
 data/exploration_log.json
 data/quantum_routes.json
 data/quantum_keys.json
-logs/quantum/*.log
+
+# All log files
+logs/
+*.log
 
 # Sensitive data
 *.key
 *.secret
 *_credentials.json
 my_*.py
+.env
 
 # Termux specific
 termux_*.sh
 local_*.py
+
+# Commit helper scripts (optional - keep local)
+commit_*.sh
+push_*.sh
+fix_*.sh
+force_*.sh
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Rust build artifacts
+rust_physics/target/
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
