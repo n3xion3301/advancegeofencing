@@ -1,0 +1,7 @@
+{
+  "ibm_quantum_token": "YOUR_IBM_QUANTUM_TOKEN_HERE",
+  "backend": "ibm_brisbane",
+  "shots": 1024,
+  "optimization_level": 3,
+  "notes": "Get your token from: https://quantum.ibm.com/"
+}
