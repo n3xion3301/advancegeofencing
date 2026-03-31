@@ -1,31 +1,18 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-dist/
-*.egg-info/
+# Private Termux-only scripts (DO NOT COMMIT)
+src/private_*.py
+config/private_*.json
+data/personal_*.json
+data/exploration_log.json
+data/quantum_routes.json
+data/quantum_keys.json
+logs/quantum/*.log
 
-# Recordings and logs
-recordings/*.mp4
-recordings/*.avi
-logs/*.log
+# Sensitive data
+*.key
+*.secret
+*_credentials.json
+my_*.py
 
-# Config (if contains sensitive data)
-config/*_private.json
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-.env
+# Termux specific
+termux_*.sh
+local_*.py
