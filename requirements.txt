@@ -1,3 +1,8 @@
-geopy==2.4.0
-requests==2.31.0
-python-dotenv==1.0.0
+qiskit
+qiskit-ibm-runtime-c
+requests>=2.32.0
+python-dateutil>=2.9.0
+numpy>=1.21
+scipy>=1.5
+rustworkx>=0.15.0
+cbindgen

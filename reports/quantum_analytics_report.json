@@ -1,0 +1,36 @@
+{
+  "generated": "2026-04-22T16:20:51.989169",
+  "metrics": {
+    "quantum_jumps": 1,
+    "teleportations": 1,
+    "superpositions": 1,
+    "entanglements": 0,
+    "wave_collapses": 0,
+    "zones_tracked": 0
+  },
+  "total_events": 3,
+  "recent_events": [
+    {
+      "type": "quantum_jumps",
+      "details": {
+        "from": "A",
+        "to": "B"
+      },
+      "timestamp": "2026-04-22T16:20:51.988069"
+    },
+    {
+      "type": "teleportations",
+      "details": {
+        "zone": "Home"
+      },
+      "timestamp": "2026-04-22T16:20:51.988486"
+    },
+    {
+      "type": "superpositions",
+      "details": {
+        "states": 3
+      },
+      "timestamp": "2026-04-22T16:20:51.988785"
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+# In gps_location_service.py, change timeout from 10 to 30 seconds
+# And add simulated location fallback for testing

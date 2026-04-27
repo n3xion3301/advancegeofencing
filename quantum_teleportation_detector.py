@@ -5,7 +5,8 @@ Teleport quantum states detected by camera
 """
 
 import numpy as np
-from qiskit import QuantumCircuit, Aer, execute
+from qiskit import QuantumCircuit
+from qiskit_ibm_runtime import QiskitRuntimeService, Sampler
 from qiskit.visualization import plot_histogram
 import matplotlib.pyplot as plt
 
@@ -26,11 +27,15 @@ except ImportError:
     print("⚠️  Rust physics not available")
 
 
+
+# Initialize IBM Quantum Runtime Service
+service = QiskitRuntimeService(channel="ibm_quantum")
+
 class QuantumTeleportationSystem:
     """Quantum teleportation with camera integration"""
     
     def __init__(self):
-        self.backend = Aer.get_backend('qasm_simulator')
+        self.backend = service.backend("ibmq_qasm_simulator")
         if CAMERA_AVAILABLE:
             self.camera = QuantumCameraDetector()
     

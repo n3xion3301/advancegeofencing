@@ -10,7 +10,7 @@
     },
     "outside": {
       "quantum_mode": "manual",
-      "entity_tracking": false
+      "entity_tracking": true
     }
   }
 }

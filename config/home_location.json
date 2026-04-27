@@ -1,0 +1,17 @@
+{
+  "address": "208 Spring Street, Huntingdon, TN 38344",
+  "coordinates": {
+    "latitude": 36.007120,
+    "longitude": -88.417670,
+    "dms": {
+      "latitude": "N 36°0'25.632\"",
+      "longitude": "W 88°25'3.61164\""
+    }
+  },
+  "geofence": {
+    "radius_meters": 50,
+    "enabled": true
+  },
+  "created": "2026-04-27T01:32:00Z",
+  "last_updated": "2026-04-27T01:32:00Z"
+}

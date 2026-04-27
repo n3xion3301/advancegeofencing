@@ -10,7 +10,8 @@ from datetime import datetime
 from collections import defaultdict
 
 try:
-    from qiskit import QuantumCircuit, Aer, execute
+    from qiskit import QuantumCircuit
+from qiskit_ibm_runtime import QiskitRuntimeService, Sampler
     QISKIT_AVAILABLE = True
 except ImportError:
     QISKIT_AVAILABLE = False
@@ -22,6 +23,10 @@ try:
 except ImportError:
     RUST_PHYSICS = False
 
+
+
+# Initialize IBM Quantum Runtime Service
+service = QiskitRuntimeService(channel="ibm_quantum")
 
 class QuantumNode:
     """A node in the quantum network"""
@@ -46,7 +51,7 @@ class QuantumTeleportationNetwork:
         self.teleportation_log = []
         
         if QISKIT_AVAILABLE:
-            self.backend = Aer.get_backend('qasm_simulator')
+            self.backend = service.backend("ibmq_qasm_simulator")
     
     def add_node(self, name, x=0, y=0):
         """Add a node to the network"""

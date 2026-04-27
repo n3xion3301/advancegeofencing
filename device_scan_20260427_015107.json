@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-04-27 01:51:03.728713",
+  "wifi": {
+    "bssid": "00:3e:73:61:22:57",
+    "frequency_mhz": 5745,
+    "ip": "192.168.100.5",
+    "link_speed_mbps": 39,
+    "mac_address": "02:00:00:00:00:00",
+    "network_id": 5,
+    "rssi": -81,
+    "ssid": "Walmartwifi",
+    "ssid_hidden": false,
+    "supplicant_state": "COMPLETED"
+  },
+  "bluetooth": [],
+  "location": {
+    "latitude": 35.997526666666666,
+    "longitude": -88.43786666666668,
+    "altitude": 86.60000000000001,
+    "accuracy": 2.799999952316284,
+    "vertical_accuracy": 15.699999809265137,
+    "bearing": 32.20000076293945,
+    "speed": 1.8828538656234741,
+    "elapsedMs": 373767,
+    "provider": "gps"
+  }
+}

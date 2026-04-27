@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""
+🎨 QUANTUM CHROMODYNAMICS
+Quark interactions and color charge
+"""
+# Standard Quantum Computing Imports
+import numpy as np
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
+from qiskit.primitives import StatevectorSampler, StatevectorEstimator
+from qiskit.visualization import plot_histogram
+from qiskit.quantum_info import Statevector
+import warnings
+import sys
+import os
+import json
+from pathlib import Path
+from datetime import datetime
+
+
+from quantum_helpers import get_real_quantum_backend, run_quantum_circuit, format_quantum_output
+from datetime import datetime
+
+
+# Initialize IBM Quantum Runtime Service
+# Using local simulator - no API needed
+
+class QuantumChromodynamics:
+    def __init__(self):
+        self.operator = "n3xion3301"
+        self.alpha_s = 0.118  # Strong coupling constant at Z boson mass
+
+    def demonstrate_qcd(self):
+        """Demonstrate QCD color charge and confinement"""
+        print("\n" + "="*70)
+        print("🎨 QUANTUM CHROMODYNAMICS".center(70))
+        print("Strong Force & Color Charge".center(70))
+        print("="*70)
+        print(f"Operator: {self.operator}".center(70))
+        print("="*70)
+
+        print("\n⚛️ Color Charge:")
+        print("   Quarks carry 'color': Red, Green, Blue")
+        print("   Antiquarks: Anti-red, Anti-green, Anti-blue")
+        print("   Gluons carry color-anticolor combinations")
+
+        print("\n🎨 Color Combinations:")
+        print("   Baryons (3 quarks): RGB = White (colorless)")
+        print("   Mesons (quark-antiquark): R-R̄ = White")
+        print("   All observable particles are colorless!")
+
+        print(f"\n💪 Strong Coupling:")
+        print(f"   αₛ = {self.alpha_s:.3f}")
+        print("   Much stronger than electromagnetic force!")
+
+        # Asymptotic freedom
+        print("\n🔬 Asymptotic Freedom:")
+        print("   High energy (short distance): Quarks nearly free")
+        print("   Low energy (long distance): Quarks confined")
+
+        # Running coupling
+        energies = [1, 10, 100, 1000]  # GeV
+        print("\n📊 Running Coupling Constant:")
+
+        for E in energies:
+            # Simplified running (actual is more complex)
+            alpha_running = self.alpha_s / (1 + self.alpha_s * np.log(E/91.2))
+            print(f"   E = {E:4d} GeV: αₛ = {alpha_running:.3f}")
+
+        print("\n🔒 Confinement:")
+        print("   Quarks CANNOT exist in isolation")
+        print("   Pulling quarks apart creates new quark pairs")
+        print("   Color force doesn't diminish with distance!")
+
+        print("\n" + "="*70)
+        print("✅ QCD: The theory of the strong force!")
+        print("="*70)
+
+def main():
+    qcd = QuantumChromodynamics()
+    qcd.demonstrate_qcd()
+
+if __name__ == "__main__":
+    main()

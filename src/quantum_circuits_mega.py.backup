@@ -1,0 +1,599 @@
+#!/usr/bin/env python3
+"""
+GIGANTIC QUANTUM CIRCUITS COLLECTION
+=====================================
+All major quantum algorithms in one script!
+
+Requirements:
+    pip install qiskit qiskit-aer matplotlib numpy scipy
+
+Algorithms included:
+1. Quantum Teleportation
+2. Grover's Search Algorithm  
+3. Shor's Factoring Algorithm
+4. Quantum Fourier Transform
+5. VQE (Variational Quantum Eigensolver)
+6. Quantum Error Correction
+7. Bell State Generator
+8. Deutsch-Jozsa Algorithm
+9. Quantum Phase Estimation
+
+Author: n3xion quantum collection
+Date: 2026-04-03
+"""
+
+import numpy as np
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, transpile
+from qiskit_aer import AerSimulator
+from qiskit.visualization import plot_histogram
+from qiskit.quantum_info import Statevector
+import warnings
+warnings.filterwarnings('ignore')
+
+print("="*80)
+print("QUANTUM CIRCUITS MEGA COLLECTION LOADED")
+print("="*80)
+
+# ============================================================================
+# 1. QUANTUM TELEPORTATION
+# ============================================================================
+
+def quantum_teleportation(state_to_teleport=None):
+    """Teleport quantum state using entanglement"""
+    print("\n" + "="*80)
+    print("1. QUANTUM TELEPORTATION")
+    print("="*80)
+    
+    qr = QuantumRegister(3, 'q')
+    cr = ClassicalRegister(2, 'c')
+    qc = QuantumCircuit(qr, cr)
+    
+    # Prepare state to teleport
+    if state_to_teleport is None:
+        theta = np.random.uniform(0, np.pi)
+        qc.ry(2*theta, 0)
+        print(f"Teleporting random state: theta={theta:.3f}")
+    
+    qc.barrier()
+    
+    # Create Bell pair
+    qc.h(1)
+    qc.cx(1, 2)
+    qc.barrier()
+    
+    # Alice's operations
+    qc.cx(0, 1)
+    qc.h(0)
+    qc.measure([0, 1], [0, 1])
+    qc.barrier()
+    
+    # Bob's corrections
+    qc.x(2).c_if(cr[1], 1)
+    qc.z(2).c_if(cr[0], 1)
+    
+    print(f"✅ Teleportation circuit created! Depth: {qc.depth()}")
+    return qc
+
+
+# ============================================================================
+# 2. GROVER'S SEARCH ALGORITHM
+# ============================================================================
+
+def grovers_algorithm(n_qubits, marked_states):
+    """Search unsorted database in O(√N) time"""
+    print("\n" + "="*80)
+    print("2. GROVER'S SEARCH ALGORITHM")
+    print("="*80)
+    
+    N = 2**n_qubits
+    n_iterations = int(np.pi/4 * np.sqrt(N / len(marked_states)))
+    print(f"Searching {N} items for {marked_states}, iterations: {n_iterations}")
+    
+    qc = QuantumCircuit(n_qubits, n_qubits)
+    
+    # Superposition
+    qc.h(range(n_qubits))
+    qc.barrier()
+    
+    # Grover iterations
+    for _ in range(n_iterations):
+        # Oracle
+        for marked in marked_states:
+            binary = format(marked, f'0{n_qubits}b')
+            for i, bit in enumerate(binary):
+                if bit == '0':
+                    qc.x(i)
+            
+            # Multi-controlled Z
+            if n_qubits == 2:
+                qc.cz(0, 1)
+            else:
+                qc.h(n_qubits-1)
+                qc.mcx(list(range(n_qubits-1)), n_qubits-1)
+                qc.h(n_qubits-1)
+            
+            for i, bit in enumerate(binary):
+                if bit == '0':
+                    qc.x(i)
+        
+        qc.barrier()
+        
+        # Diffusion
+        qc.h(range(n_qubits))
+        qc.x(range(n_qubits))
+        
+        if n_qubits == 2:
+            qc.cz(0, 1)
+        else:
+            qc.h(n_qubits-1)
+            qc.mcx(list(range(n_qubits-1)), n_qubits-1)
+            qc.h(n_qubits-1)
+        
+        qc.x(range(n_qubits))
+        qc.h(range(n_qubits))
+        qc.barrier()
+    
+    qc.measure(range(n_qubits), range(n_qubits))
+    print(f"✅ Grover circuit created! Depth: {qc.depth()}")
+    return qc
+
+
+# ============================================================================
+# 3. SHOR'S FACTORING ALGORITHM (Simplified)
+# ============================================================================
+
+def shors_algorithm(N=15, a=7):
+    """Factor N using quantum period finding"""
+    print("\n" + "="*80)
+    print("3. SHOR'S FACTORING ALGORITHM")
+    print("="*80)
+    print(f"Factoring N={N} using a={a}")
+    
+    n_count = 8
+    n_target = 4
+    
+    qc = QuantumCircuit(n_count + n_target, n_count)
+    
+    # Superposition
+    qc.h(range(n_count))
+    qc.x(n_count)
+    qc.barrier()
+    
+    # Controlled modular exponentiation (simplified)
+    for i in range(n_count):
+        for _ in range(2**i):
+            qc.cx(i, n_count)
+    
+    qc.barrier()
+    
+    # Inverse QFT
+    for i in range(n_count//2):
+        qc.swap(i, n_count-1-i)
+    
+    for j in range(n_count):
+        for k in range(j):
+            qc.cp(-np.pi/float(2**(j-k)), k, j)
+        qc.h(j)
+    
+    qc.barrier()
+    qc.measure(range(n_count), range(n_count))
+    
+    print(f"✅ Shor circuit created! Depth: {qc.depth()}")
+    print("(Simplified educational version)")
+    return qc
+
+
+# ============================================================================
+# 4. QUANTUM FOURIER TRANSFORM
+# ============================================================================
+
+def quantum_fourier_transform(n_qubits, inverse=False):
+    """Quantum analogue of discrete Fourier transform"""
+    print("\n" + "="*80)
+    print(f"4. QUANTUM FOURIER TRANSFORM {'(INVERSE)' if inverse else ''}")
+    print("="*80)
+    
+    qc = QuantumCircuit(n_qubits)
+    
+    def qft_rotations(circuit, n):
+        if n == 0:
+            return circuit
+        n -= 1
+        circuit.h(n)
+        for qubit in range(n):
+            circuit.cp(np.pi/2**(n-qubit), qubit, n)
+        qft_rotations(circuit, n)
+    
+    def swap_registers(circuit, n):
+        for qubit in range(n//2):
+            circuit.swap(qubit, n-qubit-1)
+        return circuit
+    
+    if not inverse:
+        qft_rotations(qc, n_qubits)
+        swap_registers(qc, n_qubits)
+    else:
+        swap_registers(qc, n_qubits)
+        for i in range(n_qubits):
+            for j in range(i):
+                qc.cp(-np.pi/float(2**(i-j)), j, i)
+            qc.h(i)
+    
+    print(f"✅ QFT circuit created! Qubits: {n_qubits}, Depth: {qc.depth()}")
+    return qc
+
+
+# ============================================================================
+# 5. VQE (VARIATIONAL QUANTUM EIGENSOLVER)
+# ============================================================================
+
+def vqe_ansatz(n_qubits, params):
+    """Parameterized circuit for VQE"""
+    print("\n" + "="*80)
+    print("5. VQE (VARIATIONAL QUANTUM EIGENSOLVER)")
+    print("="*80)
+    
+    qc = QuantumCircuit(n_qubits)
+    
+    n_layers = len(params) // (2 * n_qubits)
+    print(f"Creating VQE ansatz with {n_layers} layers, {len(params)} parameters")
+    
+    param_idx = 0
+    
+    for layer in range(n_layers):
+        # Rotation layer
+        for qubit in range(n_qubits):
+            qc.ry(params[param_idx], qubit)
+            param_idx += 1
+            qc.rz(params[param_idx], qubit)
+            param_idx += 1
+        
+        # Entanglement layer
+        for qubit in range(n_qubits-1):
+            qc.cx(qubit, qubit+1)
+        
+        qc.barrier()
+    
+    print(f"✅ VQE ansatz created! Depth: {qc.depth()}")
+    return qc
+
+
+# ============================================================================
+# 6. QUANTUM ERROR CORRECTION (3-QUBIT BIT-FLIP CODE)
+# ============================================================================
+
+def bit_flip_error_correction():
+    """3-qubit bit-flip error correction code"""
+    print("\n" + "="*80)
+    print("6. QUANTUM ERROR CORRECTION (BIT-FLIP CODE)")
+    print("="*80)
+    
+    # 3 data qubits + 2 ancilla qubits
+    qc = QuantumCircuit(5, 2)
+    
+    # Prepare |+> state
+    qc.h(0)
+    qc.barrier()
+    
+    # Encoding: |ψ> -> |ψψψ>
+    qc.cx(0, 1)
+    qc.cx(0, 2)
+    qc.barrier(label='Encoded')
+    
+    # Simulate bit-flip error on qubit 1
+    qc.x(1)
+    qc.barrier(label='Error')
+    
+    # Syndrome measurement
+    qc.cx(0, 3)
+    qc.cx(1, 3)
+    qc.measure(3, 0)
+    
+    qc.cx(1, 4)
+    qc.cx(2, 4)
+    qc.measure(4, 1)
+    
+    qc.barrier(label='Syndrome')
+    
+    print("✅ Error correction circuit created!")
+    print("Syndromes: 00=no error, 10=qubit 1, 01=qubit 2, 11=qubit 0")
+    return qc
+
+
+# ============================================================================
+# 7. BELL STATE GENERATOR
+# ============================================================================
+
+def bell_state_generator(bell_state=0):
+    """
+    Generate Bell States (Maximally Entangled States)
+    
+    0: |Φ+> = (|00> + |11>)/√2
+    1: |Φ-> = (|00> - |11>)/√2
+    2: |Ψ+> = (|01> + |10>)/√2
+    3: |Ψ-> = (|01> - |10>)/√2
+    """
+    print("\n" + "="*80)
+    print("7. BELL STATE GENERATOR")
+    print("="*80)
+    
+    bell_names = ['|Φ+>', '|Φ->', '|Ψ+>', '|Ψ->']
+    print(f"Creating Bell state: {bell_names[bell_state]}")
+    
+    qc = QuantumCircuit(2, 2)
+    
+    # Create |Φ+> as base
+    qc.h(0)
+    qc.cx(0, 1)
+    
+    # Modify for other Bell states
+    if bell_state == 1:  # |Φ->
+        qc.z(0)
+    elif bell_state == 2:  # |Ψ+>
+        qc.x(1)
+    elif bell_state == 3:  # |Ψ->
+        qc.z(0)
+        qc.x(1)
+    
+    qc.barrier()
+    qc.measure([0, 1], [0, 1])
+    
+    print(f"✅ Bell state created! Depth: {qc.depth()}")
+    return qc
+
+
+# ============================================================================
+# 8. DEUTSCH-JOZSA ALGORITHM
+# ============================================================================
+
+def deutsch_jozsa_algorithm(n_qubits, oracle_type='balanced'):
+    """Determine if function is constant or balanced in one query"""
+    print("\n" + "="*80)
+    print("8. DEUTSCH-JOZSA ALGORITHM")
+    print("="*80)
+    print(f"Testing {oracle_type} oracle with {n_qubits} qubits")
+    
+    qc = QuantumCircuit(n_qubits + 1, n_qubits)
+    
+    # Initialize ancilla to |->
+    qc.x(n_qubits)
+    qc.h(n_qubits)
+    
+    # Initialize inputs to |+>
+    qc.h(range(n_qubits))
+    qc.barrier()
+    
+    # Oracle
+    if oracle_type == 'constant':
+        # Do nothing or flip all
+        if np.random.random() > 0.5:
+            qc.x(n_qubits)
+    else:  # balanced
+        # Flip half the inputs
+        for i in range(n_qubits):
+            qc.cx(i, n_qubits)
+    
+    qc.barrier()
+    
+    # Apply Hadamard
+    qc.h(range(n_qubits))
+    qc.barrier()
+    
+    # Measure
+    qc.measure(range(n_qubits), range(n_qubits))
+    
+    print(f"✅ Deutsch-Jozsa created! Depth: {qc.depth()}")
+    print("Result: All 0s = constant, otherwise = balanced")
+    return qc
+
+
+# ============================================================================
+# 9. QUANTUM PHASE ESTIMATION
+# ============================================================================
+
+def quantum_phase_estimation(n_counting=4, phase=0.5):
+    """Estimate phase of eigenvalue of unitary operator"""
+    print("\n" + "="*80)
+    print("9. QUANTUM PHASE ESTIMATION")
+    print("="*80)
+    print(f"Estimating phase {phase} with {n_counting} counting qubits")
+    print(f"Precision: 1/{2**n_counting}")
+    
+    qc = QuantumCircuit(n_counting + 1, n_counting)
+    
+    # Superposition on counting qubits
+    qc.h(range(n_counting))
+    
+    # Initialize eigenstate |1>
+    qc.x(n_counting)
+    qc.barrier()
+    
+    # Controlled unitary operations
+    for i in range(n_counting):
+        power = 2**i
+        angle = 2 * np.pi * phase * power
+        qc.cp(angle, i, n_counting)
+    
+    qc.barrier()
+    
+    # Inverse QFT
+    for i in range(n_counting//2):
+        qc.swap(i, n_counting-1-i)
+    
+    for j in range(n_counting):
+        for k in range(j):
+            qc.cp(-np.pi/float(2**(j-k)), k, j)
+        qc.h(j)
+    
+    qc.barrier()
+    qc.measure(range(n_counting), range(n_counting))
+    
+    print(f"✅ Phase estimation created! Depth: {qc.depth()}")
+    return qc
+
+
+# ============================================================================
+# MAIN EXECUTION AND RUNNER
+# ============================================================================
+
+def run_all_algorithms():
+    """Run all 9 quantum algorithms and display results"""
+    
+    print("\n" + "="*80)
+    print("🚀 RUNNING ALL 9 QUANTUM ALGORITHMS 🚀")
+    print("="*80 + "\n")
+    
+    simulator = AerSimulator()
+    results = {}
+    
+    try:
+        # 1. Quantum Teleportation
+        qc1 = quantum_teleportation()
+        job1 = simulator.run(transpile(qc1, simulator), shots=1024)
+        results['teleportation'] = job1.result().get_counts()
+        
+        # 2. Grover's Algorithm (search for 3 in 3-qubit space)
+        qc2 = grovers_algorithm(3, [3])
+        job2 = simulator.run(transpile(qc2, simulator), shots=1024)
+        results['grover'] = job2.result().get_counts()
+        
+        # 3. Shor's Algorithm
+        qc3 = shors_algorithm(15, 7)
+        job3 = simulator.run(transpile(qc3, simulator), shots=1024)
+        results['shor'] = job3.result().get_counts()
+        
+        # 4. Quantum Fourier Transform
+        qc4 = quantum_fourier_transform(4)
+        print("✅ QFT circuit created (no measurement)")
+        
+        # 5. VQE
+        n_qubits_vqe = 2
+        n_params = 2 * n_qubits_vqe * 2  # 2 layers
+        params = np.random.uniform(0, 2*np.pi, n_params)
+        qc5 = vqe_ansatz(n_qubits_vqe, params)
+        
+        # 6. Error Correction
+        qc6 = bit_flip_error_correction()
+        job6 = simulator.run(transpile(qc6, simulator), shots=1024)
+        results['error_correction'] = job6.result().get_counts()
+        
+        # 7. Bell States
+        qc7 = bell_state_generator(0)
+        job7 = simulator.run(transpile(qc7, simulator), shots=1024)
+        results['bell'] = job7.result().get_counts()
+        
+        # 8. Deutsch-Jozsa
+        qc8 = deutsch_jozsa_algorithm(3, 'balanced')
+        job8 = simulator.run(transpile(qc8, simulator), shots=1024)
+        results['deutsch_jozsa'] = job8.result().get_counts()
+        
+        # 9. Phase Estimation
+        qc9 = quantum_phase_estimation(4, 0.5)
+        job9 = simulator.run(transpile(qc9, simulator), shots=1024)
+        results['phase_estimation'] = job9.result().get_counts()
+        
+        # Print results summary
+        print("\n" + "="*80)
+        print("📊 RESULTS SUMMARY 📊")
+        print("="*80)
+        
+        for name, counts in results.items():
+            print(f"\n{name.upper().replace('_', ' ')}:")
+            sorted_counts = sorted(counts.items(), key=lambda x: x[1], reverse=True)[:5]
+            for state, count in sorted_counts:
+                print(f"  |{state}>: {count:4d} ({count/1024*100:5.1f}%)")
+        
+        print("\n" + "="*80)
+        print("✅ ALL 9 ALGORITHMS COMPLETED SUCCESSFULLY! ✅")
+        print("="*80)
+        
+        return results
+        
+    except Exception as e:
+        print(f"\n❌ Error running algorithms: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def run_single_algorithm(algo_num):
+    """Run a single algorithm by number (1-9)"""
+    
+    simulator = AerSimulator()
+    
+    algorithms = {
+        1: lambda: quantum_teleportation(),
+        2: lambda: grovers_algorithm(3, [3]),
+        3: lambda: shors_algorithm(15, 7),
+        4: lambda: quantum_fourier_transform(4),
+        5: lambda: vqe_ansatz(2, np.random.uniform(0, 2*np.pi, 8)),
+        6: lambda: bit_flip_error_correction(),
+        7: lambda: bell_state_generator(0),
+        8: lambda: deutsch_jozsa_algorithm(3, 'balanced'),
+        9: lambda: quantum_phase_estimation(4, 0.5)
+    }
+    
+    if algo_num not in algorithms:
+        print(f"❌ Invalid algorithm number: {algo_num}")
+        return None
+    
+    qc = algorithms[algo_num]()
+    
+    # Run if circuit has measurements
+    if qc.num_clbits > 0:
+        job = simulator.run(transpile(qc, simulator), shots=1024)
+        result = job.result().get_counts()
+        
+        print("\n📊 Results:")
+        sorted_counts = sorted(result.items(), key=lambda x: x[1], reverse=True)
+        for state, count in sorted_counts:
+            print(f"  |{state}>: {count:4d} ({count/1024*100:5.1f}%)")
+        
+        return result
+    else:
+        print("✅ Circuit created (no measurements)")
+        return qc
+
+
+# ============================================================================
+# INTERACTIVE MENU
+# ============================================================================
+
+def main():
+    """Main interactive menu"""
+    
+    print("\n" + "="*80)
+    print("⚛️  QUANTUM CIRCUITS MEGA COLLECTION ⚛️")
+    print("="*80)
+    print("\nChoose an option:")
+    print("  0 - Run ALL 9 algorithms")
+    print("  1 - Quantum Teleportation")
+    print("  2 - Grover's Search")
+    print("  3 - Shor's Factoring")
+    print("  4 - Quantum Fourier Transform")
+    print("  5 - VQE (Variational Quantum Eigensolver)")
+    print("  6 - Quantum Error Correction")
+    print("  7 - Bell State Generator")
+    print("  8 - Deutsch-Jozsa Algorithm")
+    print("  9 - Quantum Phase Estimation")
+    print("="*80)
+    
+    try:
+        choice = input("\nEnter choice (0-9): ").strip()
+        
+        if choice == '0':
+            run_all_algorithms()
+        elif choice.isdigit() and 1 <= int(choice) <= 9:
+            run_single_algorithm(int(choice))
+        else:
+            print("❌ Invalid choice!")
+    
+    except KeyboardInterrupt:
+        print("\n\n👋 Goodbye!")
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+
+
+if __name__ == "__main__":
+    main()
+

@@ -1,0 +1,25 @@
+{
+  "zones": [
+    {
+      "name": "Home Safe Zone",
+      "latitude": 40.7128,
+      "longitude": -74.006,
+      "radius": 100,
+      "type": "safe"
+    },
+    {
+      "name": "Work Zone",
+      "latitude": 40.7589,
+      "longitude": -73.9851,
+      "radius": 50,
+      "type": "work"
+    },
+    {
+      "name": "Alert Zone",
+      "latitude": 40.7484,
+      "longitude": -73.9857,
+      "radius": 200,
+      "type": "alert"
+    }
+  ]
+}

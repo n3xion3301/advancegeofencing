@@ -1,0 +1,19 @@
+[
+  {
+    "id": "home",
+    "name": "Home",
+    "lat": 40.7128,
+    "lon": -74.006,
+    "radius": 100,
+    "quantum_enabled": true
+  },
+  {
+    "id": "fortknox",
+    "name": "Work",
+    "lat": 40.758,
+    "lon": -73.9855,
+    "radius": 200,
+    "quantum_enabled": true,
+    "created": "2026-04-23T09:16:55.238939"
+  }
+]

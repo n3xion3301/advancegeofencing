@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    QUANTUM HARDWARE GEOFENCE SYSTEM                          ║
+║                  Advanced Multi-Zone Detection Platform                      ║
+║                                                                              ║
+║  Uses quantum superposition to simultaneously check multiple geofence zones  ║
+║  Powered by custom AerSimulator - Pure Python quantum computing             ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+"""
+import json
+import math
+import sys
+import time
+from pathlib import Path
+from datetime import datetime
+
+from aer_simulator import AerSimulator
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+
+class QuantumHardwareGeofence:
+    def __init__(self):
+        self.show_banner()
+        
+        self.log_file = Path("logs/quantum/hardware_geofence.log")
+        self.log_file.parent.mkdir(parents=True, exist_ok=True)
+        self.zones_file = Path("config/zones.json")
+        self.zones = self.load_zones()
+        
+        self.detection_history = []
+        
+        print(f"\n✅ Quantum simulator: Custom AerSimulator (Pure Python)")
+        print(f"📍 Loaded {len(self.zones)} geofence zones")
+        print(f"📝 Log file: {self.log_file}")
+        print("="*80)
+    

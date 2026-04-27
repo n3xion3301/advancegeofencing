@@ -1,0 +1,31 @@
+import json
+from qiskit import QuantumCircuit
+from qiskit_ibm_runtime import QiskitRuntimeService, Sampler
+
+# Load config
+with open('config/ibm_quantum_config.json', 'r') as f:
+    config = json.load(f)
+
+# Connect to IBM Quantum
+service = QiskitRuntimeService(channel="ibm_quantum")
+
+# Create your quantum circuit here
+qc = QuantumCircuit(3)
+# Add your gates here
+qc.h(0)
+qc.cx(0, 1)
+qc.cx(1, 2)
+qc.measure_all()
+
+print("Your circuit:")
+print(qc)
+
+# Choose backend
+backend = service.backend('ibmq_qasm_simulator')
+print(f"Using backend: {backend.name}")
+
+# Run
+sampler = Sampler(backend)
+job = sampler.run(qc, shots=config.get('shots', 1024))
+result = job.result()
+print(f"\nResults: {result}")

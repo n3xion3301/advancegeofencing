@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Astral Sanctuary",
+    "lat": 40.7128,
+    "lon": -74.006,
+    "radius": 100,
+    "power_level": 8.0
+  },
+  {
+    "name": "Meditation Chamber",
+    "lat": 40.758,
+    "lon": -73.9855,
+    "radius": 50,
+    "power_level": 6.0
+  },
+  {
+    "name": "Quantum Nexus",
+    "lat": 40.7489,
+    "lon": -73.968,
+    "radius": 150,
+    "power_level": 10.0
+  }
+]
